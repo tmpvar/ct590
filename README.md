@@ -7,3 +7,11 @@ process ctscan files from a [Discovery CT509](http://www3.gehealthcare.com/en/pr
 One of the biggest hurdles here is figuring out what all the dicom fields are.
 http://dicomlookup.com/ is super helpful with this.
 
+## example output
+
+![](http://i.imgur.com/K6yhDcK.png)
+
+## license
+
+[MIT](LICENSE.txt)
+
