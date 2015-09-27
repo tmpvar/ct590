@@ -10,8 +10,9 @@ var stl = require('stl')
 var files = [];
 var fs = require('fs');
 
+var THRESHOLD = 1200;
 
-for (var i = 8; i<200; i++) {
+for (var i = 8; i<71; i++) {
   var k = i+'';
   while (k.length < 7) {
     k = '0' + k;
@@ -19,8 +20,6 @@ for (var i = 8; i<200; i++) {
   files.push('I' + k);
 
 }
-
-console.log(files)
 
 var bounds = [
   [Infinity, Infinity, Infinity],
@@ -47,47 +46,68 @@ async.mapSeries(files, parseFile, function(e, r) {
   // TODO: handle other # of bits stored
 
   var volume = ndarray(new Uint16Array(dimensions[0] * dimensions[1] * dimensions[2]), dimensions)
-
-
   var lb = bounds[0];
-  var max = 0;
-  // run through each slice and apply the voxels to the volume
-  r.forEach(function(d) {
+
+  function readPositionFromSlice(out, d, p) {
     var pxs = d.pixelSpacing;
     var dir = d.direction;
     var w = d.voxelColumns;
     var h = d.voxelRows;
-    var step = (d.bitsStored/8);
-    var l = w*h*step
 
+
+    // compute the current x and y
+    var vec = [
+      (p % w) * pxs[0],
+      (Math.floor(p / w)) * pxs[1],
+      0
+    ];
+
+    // now stuff the value into the volume at the correct location
+    // dataset.positionImagePatient?
+    var volumePosition = [0, 0, 0];
+    vec3.multiply(volumePosition, vec, dir);
+
+    var start = d.positionImagePatient;
+
+    out[0] = Math.round((lb[0] - start[0]) + volumePosition[0])
+    out[1] = Math.round((lb[1] - start[1]) + volumePosition[1])
+    out[2] = Math.round((lb[2] - start[2]) + volumePosition[2])
+    return
+  }
+
+  var tmp = [0, 0, 0];
+
+  // run through each slice and apply the voxels to the volume
+  r.forEach(function(d, sliceIndex) {
+
+    var step = (d.bitsStored/8);
+    var l = d.pixelData.length;
 
     for (var i=0; i<l; i+=step) {
       // TODO: handle endianness
-      var v = d.pixelData.readInt16LE(i)
-      max = Math.max(v, max);
+      var v = Math.max(0, d.pixelData.readInt16LE(i))
 
       var p = i/step;
-      // compute the current x and y
-      var vec = [
-        (p % w) * pxs[0],
-        (Math.floor(p / w)) * pxs[1],
-        0
-      ];
 
-      // now stuff the value into the volume at the correct location
-      // dataset.positionImagePatient?
-      var volumePosition = [0, 0, 0];
-      vec3.multiply(volumePosition, vec, dir);
+      readPositionFromSlice(tmp, d, p);
+      volume.set(tmp[0], tmp[1], sliceIndex, v);
 
-      var start = d.positionImagePatient;
+      if (v >= THRESHOLD && sliceIndex < r.length-1) {
+        var nextSlice = r[sliceIndex+1]
 
+      //   var tv = d.pixelData.readInt16LE(i);
+      //   readPositionFromSlice(tmp, nextSlice, p);
 
-      volume.set(
-        Math.round((lb[0] - start[0]) + volumePosition[0]),
-        Math.round((lb[1] - start[1]) + volumePosition[1]),
-        Math.round((lb[2] - start[2]) + volumePosition[2]),
-        v
-      )
+        var nextSliceZ = Math.round((lb[2] - d.positionImagePatient[2]));// + nextSlice.positionImagePatient[2])
+        var nextSliceDirection = (lb[2] - nextSlice.positionImagePatient[2]) - nextSliceZ;
+
+      //   // // TODO: don't assume that the next slice has the same planar orientation
+      //   // // TODO: don't assume that the slices go in any particular direction (z is safe, but which way?)
+      //   // var interp = (v - tv)/3;
+      //   var interp = 0;
+      //   volume.set(tmp[0], tmp[1], tmp[2] + 1, v - interp)
+      //   volume.set(tmp[0], tmp[1], tmp[2] + 2, v - interp * 2)
+      }
     }
   })
 
@@ -96,7 +116,7 @@ async.mapSeries(files, parseFile, function(e, r) {
     facets: []
   }
 
-  var nets = surfaceNets(volume, 1200);
+  var nets = surfaceNets(volume, THRESHOLD);
 
 
   var stream = fs.createWriteStream('/Users/tmpvar/Desktop/elbow-' + Date.now() + '.stl')
@@ -125,7 +145,7 @@ var last = {};
 function parseFile(file, cb) {
   dicom.parseFile(path.join('/Users/tmpvar/Sync/broken-elbow/IMAGE/1593844/20150614/', file), function(e, d) {
     if (e) throw e;
-    console.log(d);
+    // console.log(d);
 // console.log(d.pixelData)
     console.log('\n\n---------- %s -----------', file)
     // console.log(Object.keys(d.dataset).join(', '))
@@ -158,7 +178,6 @@ function parseFile(file, cb) {
     bounds[1][1] = Math.max(pos[1], bounds[1][1]);
     bounds[1][2] = Math.max(pos[2], bounds[1][2]);
 
-
     var rot = dataset.orientationImagePatient;
     dataset.rotation = [
       rot[0], rot[3], 0,
@@ -182,7 +201,12 @@ function parseFile(file, cb) {
     bounds[1][2] = Math.max(rotated[2], bounds[1][2]);
 
     dataset.direction = [0, 0, 0];
-    vec3.normalize(dataset.direction, rotated);
+    // vec3.normalize(dataset.direction, rotated);
+    vec3.normalize(dataset.direction, vec3.transformMat3([], vec, [
+      rot[0], rot[1], rot[2],
+      rot[3], rot[4], rot[5],
+      0, 0, 0
+    ]));
 
     console.log('direction', dataset.direction)
     console.log('start', pos)
@@ -195,12 +219,10 @@ function parseFile(file, cb) {
       0, 0, 0
     ]))
 
-
     console.log('orientation', dataset.orientationImagePatient)
     console.log('position', dataset.positionImagePatient)
     console.log('pixelSpacing', dataset.pixelSpacing)
     console.log('diameter', dataset.reconstructDiameter)
-    console.log(dataset)
     return cb(null, dataset)
   })
 }
