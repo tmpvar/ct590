@@ -33,7 +33,7 @@ function exp(a) {
 
 
 async.mapSeries(files, parseFile, function(e, r) {
-  console.log(bounds)
+  console.error(bounds)
 
   // TODO: scale this better.
   var dimensions = [
@@ -41,7 +41,7 @@ async.mapSeries(files, parseFile, function(e, r) {
     Math.round(bounds[1][1] - bounds[0][1]),
     Math.round(bounds[1][2] - bounds[0][2]),
   ];
-  console.log('dimensions', dimensions)
+  console.error('dimensions', dimensions)
 
   // TODO: handle other # of bits stored
 
@@ -119,12 +119,12 @@ async.mapSeries(files, parseFile, function(e, r) {
   var nets = surfaceNets(volume, THRESHOLD);
 
 
-  var stream = fs.createWriteStream('/Users/tmpvar/Desktop/elbow-' + Date.now() + '.stl')
-  stream.write('solid elbow\n');
+  // var stream = fs.createWriteStream('/Users/tmpvar/Desktop/elbow-' + Date.now() + '.stl')
+  process.stdout.write('solid elbow\n');
 
   nets.cells.forEach(function(cell) {
 
-    stream.write([
+    process.stdout.write([
       'facet',
         'outer loop',
         'vertex ' + nets.positions[cell[0]].map(exp).join(' '),
@@ -136,7 +136,7 @@ async.mapSeries(files, parseFile, function(e, r) {
     ].join('\n'))
   })
 
-  stream.end('endsolid');
+  process.stdout.write('endsolid');
 
 })
 
@@ -145,20 +145,20 @@ var last = {};
 function parseFile(file, cb) {
   dicom.parseFile(path.join('/Users/tmpvar/Sync/broken-elbow/IMAGE/1593844/20150614/', file), function(e, d) {
     if (e) throw e;
-    // console.log(d);
-// console.log(d.pixelData)
-    console.log('\n\n---------- %s -----------', file)
-    // console.log(Object.keys(d.dataset).join(', '))
-    // console.log(d.dataset['00431031'])
-    // console.log(d.dataset['00280030'])
-    // console.log(d.dataset['00201041'])
-    // console.log(diff(last, d.dataset))
+    // console.error(d);
+// console.error(d.pixelData)
+    console.error('\n\n---------- %s -----------', file)
+    // console.error(Object.keys(d.dataset).join(', '))
+    // console.error(d.dataset['00431031'])
+    // console.error(d.dataset['00280030'])
+    // console.error(d.dataset['00201041'])
+    // console.error(diff(last, d.dataset))
     // last = d.dataset;
 
     var dataset = {
       file: file
     }
-// console.log(d.dataset)
+// console.error(d.dataset)
     datasetKeys.forEach(function(a) {
       var o = d.dataset[a[0]];
       if (o) {
@@ -201,28 +201,28 @@ function parseFile(file, cb) {
     bounds[1][2] = Math.max(rotated[2], bounds[1][2]);
 
     dataset.direction = [0, 0, 0];
-    // vec3.normalize(dataset.direction, rotated);
-    vec3.normalize(dataset.direction, vec3.transformMat3([], vec, [
-      rot[0], rot[1], rot[2],
-      rot[3], rot[4], rot[5],
-      0, 0, 0
-    ]));
+    vec3.normalize(dataset.direction, rotated);
+    // vec3.normalize(dataset.direction, vec3.transformMat3([], vec, [
+    //   rot[0], rot[1], rot[2],
+    //   rot[3], rot[4], rot[5],
+    //   0, 0, 0
+    // ]));
 
-    console.log('direction', dataset.direction)
-    console.log('start', pos)
-    console.log('vec', vec)
+    console.error('direction', dataset.direction)
+    console.error('start', pos)
+    console.error('vec', vec)
 
-    console.log('rotated', rotated)
-    console.log('rotated2', vec3.transformMat3([], vec, [
+    console.error('rotated', rotated)
+    console.error('rotated2', vec3.transformMat3([], vec, [
       rot[0], rot[1], rot[2],
       rot[3], rot[4], rot[5],
       0, 0, 0
     ]))
 
-    console.log('orientation', dataset.orientationImagePatient)
-    console.log('position', dataset.positionImagePatient)
-    console.log('pixelSpacing', dataset.pixelSpacing)
-    console.log('diameter', dataset.reconstructDiameter)
+    console.error('orientation', dataset.orientationImagePatient)
+    console.error('position', dataset.positionImagePatient)
+    // console.error('pixelSpacing', dataset.pixelSpacing)
+    // console.error('diameter', dataset.reconstructDiameter)
     return cb(null, dataset)
   })
 }
