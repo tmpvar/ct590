@@ -1,4 +1,7 @@
 {
+  "name": "y",
+  "version": "0.0.0",
+  "license": "SEE LICENSE IN LICENSE.txt",
   "dependencies": {
     "async": "^1.4.2",
     "deep-diff": "^0.3.2",
@@ -9,5 +12,29 @@
     "ndarray": "^1.0.18",
     "stl": "^1.1.1",
     "surface-nets": "^1.0.2"
-  }
+  },
+  "description": "process ctscan files from a [Discovery CT509](http://www3.gehealthcare.com/en/products/categories/computed_tomography/radiation_therapy_planning/discovery_ct590rt) into voxels.",
+  "main": "parse.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tmpvar/ct590.git"
+  },
+  "keywords": [
+    "ctscan",
+    "ct509",
+    "Discovery",
+    "CT590",
+    "voxels",
+    "medical",
+    "science"
+  ],
+  "author": "Elijah Insua <tmpvar@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/tmpvar/ct590/issues"
+  },
+  "homepage": "https://github.com/tmpvar/ct590#readme"
 }
