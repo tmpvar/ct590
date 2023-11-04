@@ -4,10 +4,13 @@
   "license": "SEE LICENSE IN LICENSE.txt",
   "dependencies": {
     "async": "^1.4.2",
+    "dcmjs": "^0.29.12",
     "deep-diff": "^0.3.2",
-    "dicomjs": "0.0.9",
+    "dicom": "^0.4.4",
+    "dicomjs": "0.1.0",
     "gl-mat3": "^1.0.0",
     "gl-mat4": "^1.1.4",
+    "gl-matrix": "^3.4.3",
     "gl-vec3": "^1.0.3",
     "ndarray": "^1.0.18",
     "stl": "^1.1.1",
@@ -15,7 +18,6 @@
   },
   "description": "process ctscan files from a [Discovery CT509](http://www3.gehealthcare.com/en/products/categories/computed_tomography/radiation_therapy_planning/discovery_ct590rt) into voxels.",
   "main": "parse.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
